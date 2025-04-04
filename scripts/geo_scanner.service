@@ -1,0 +1,13 @@
+[Unit]
+Description=geo-scanner
+
+[Service]
+User=administrator
+Type=simple
+WorkingDirectory=/home/administrator/backend_project/workspace/geo-scanner
+ExecStart=/home/administrator/backend_project/workspace/geo-scanner/venv/bin/gunicorn Geo_Scanner.wsgi:application -b 0.0.0.0:5003 --error-logfile /var/log/geo_scanner/error.log --error-logfile /var/log/geo_scanner/error.log --access-logfile /var/log/geo_scanner/access.log
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
