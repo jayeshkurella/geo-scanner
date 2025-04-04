@@ -1,0 +1,16 @@
+*.pyc
+agricultural_products/download_tile.log
+
+.idea/
+.vscode/
+venv/
+venv_rasterio/
+__pycache__/
+**/__pycache__/
+
+# Download Directory
+sentinel_downloads/
+sentinel_downloads/tile_zips/
+agricultural_products/downloaded_tiles/
+agricultural_products/data/
+agricultural_products/data_landsat/
