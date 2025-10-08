@@ -55,7 +55,7 @@ pipeline {
                 sh '''
                 echo "Running health check..."
                 sleep 5
-                STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5003/health/)
+                STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5003/)
                 if [ "$STATUS" -ne 200 ]; then
                   echo "❌ Health check failed (HTTP $STATUS)"
                   exit 1
