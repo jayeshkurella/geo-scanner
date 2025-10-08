@@ -1,6 +1,6 @@
 #!/bin/bash
 
-project_directory="/home/administrator/backend_project/workspace/geo-scanner"
+project_directory="/var/lib/jenkins/workspace/geo-scanner"
 
 echo "Changing directory to project workspace directory"
 cd $project_directory || { echo "Failed to change directory to $project_directory"; exit 1; }

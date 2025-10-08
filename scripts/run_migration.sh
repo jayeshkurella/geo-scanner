@@ -1,6 +1,6 @@
 #!/bin/bash
 
-project_directory="/home/administrator/backend_project/workspace/geo-scanner"
+project_directory="/var/lib/jenkins/workspace/geo-scanner"
 
 echo "Change directory to python project directory"
 

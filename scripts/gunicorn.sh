@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define project directory and log directory paths
-project_directory="/home/administrator/backend_project/workspace/geo-scanner"
+project_directory="/var/lib/jenkins/workspace/geo-scanner"
 log_directory="/var/log/geo_scanner"
 
 echo "Changing directory to project workspace directory"
