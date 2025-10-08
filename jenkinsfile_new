@@ -21,14 +21,15 @@ pipeline {
         }
 
         stage('Run Tests') {
-            steps {
-                sh '''
-                echo "Running automated tests..."
-                source venv/bin/activate
-                pytest --maxfail=1 --disable-warnings -q || exit 1
-                '''
-            }
-        }
+    steps {
+        sh '''
+        echo "Running automated tests..."
+        . venv/bin/activate
+        pytest --maxfail=1 --disable-warnings -q || exit 1
+        '''
+    }
+}
+
 
         stage('Migration') {
             steps {
