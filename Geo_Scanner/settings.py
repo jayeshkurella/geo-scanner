@@ -96,8 +96,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'geo_scanner',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
+        'USER': 'admin',
+        'PASSWORD': 'admin123',
         'HOST': 'localhost',
     }
 }
