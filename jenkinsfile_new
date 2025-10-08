@@ -7,7 +7,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', credentialsId: 'new-token1', url: 'https://gitlab.com/coderizers/app_view/geo-scanner.git'
+                git branch: 'master', url: 'https://github.com/jayeshkurella/geo-scanner.git'
             }
         }
 
