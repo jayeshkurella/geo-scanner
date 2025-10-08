@@ -2,7 +2,7 @@
 Description=geo-scanner
 
 [Service]
-User=ubuntu
+User=jayesh
 #Group=administrator
 Type=simple
 WorkingDirectory=/var/lib/jenkins/workspace/geo-scanner
