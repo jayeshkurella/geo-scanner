@@ -25,6 +25,7 @@ pipeline {
         sh '''
         echo "Running automated tests..."
         . venv/bin/activate
+        pip install pytest
         pytest --maxfail=1 --disable-warnings -q || exit 1
         '''
     }
