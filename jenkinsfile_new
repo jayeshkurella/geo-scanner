@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+    environment {
+        WORKSPACE_DIR = "${WORKSPACE}/geo-scanner/scripts"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'master', credentialsId: 'new-token1', url: 'https://gitlab.com/coderizers/app_view/geo-scanner.git'
+            }
+        }
+
+        stage('Setup Virtual Environment, Install Dependencies') {
+            steps {
+                sh '''
+                chmod +x scripts/setup_virtualenv.sh
+                ./scripts/setup_virtualenv.sh
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '''
+                echo "Running automated tests..."
+                source venv/bin/activate
+                pytest --maxfail=1 --disable-warnings -q || exit 1
+                '''
+            }
+        }
+
+        stage('Migration') {
+            steps {
+                sh '''
+                chmod +x scripts/run_migration.sh
+                ./scripts/run_migration.sh
+                '''
+            }
+        }
+
+        stage('Setup Gunicorn') {
+            steps {
+                sh '''
+                chmod +x scripts/gunicorn.sh
+                ./scripts/gunicorn.sh
+                '''
+            }
+        }
+
+        stage('Health Check & Monitoring') {
+            steps {
+                sh '''
+                echo "Running health check..."
+                sleep 5
+                STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:8000/health/)
+                if [ "$STATUS" -ne 200 ]; then
+                  echo "❌ Health check failed (HTTP $STATUS)"
+                  exit 1
+                else
+                  echo "✅ Application is healthy"
+                fi
+                '''
+            }
+        }
+    }
+}
