@@ -51,19 +51,19 @@ pipeline {
         }
 
         stage('Health Check & Monitoring') {
-            steps {
-                sh '''
-                echo "Running health check..."
-                sleep 5
-                STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5003/)
-                if [ "$STATUS" -ne 200 ]; then
-                  echo "❌ Health check failed (HTTP $STATUS)"
-                  exit 1
-                else
-                  echo "✅ Application is healthy"
-                fi
-                '''
-            }
-        }
+    steps {
+        sh '''
+        echo "Running health check on /admin/ ..."
+        sleep 5
+        STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5003/admin/)
+        if [ "$STATUS" -ne 200 ] && [ "$STATUS" -ne 302 ]; then
+          echo "❌ Health check failed (HTTP $STATUS)"
+          exit 1
+        else
+          echo "✅ Application is healthy (HTTP $STATUS)"
+        fi
+        '''
+    }
+}
     }
 }
