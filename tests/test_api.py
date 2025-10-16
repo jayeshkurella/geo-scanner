@@ -1,6 +1,9 @@
-from app import app
+import pytest
+from django.test import Client
+
+pytestmark = pytest.mark.django_db  
 
 def test_admin_route():
-    client = app.test_client()
+    client = Client()
     response = client.get("/admin/")
-    assert response.status_code in [200]  # OK or redirect to login
+    assert response.status_code in [200]  # 302 if redirect to login
