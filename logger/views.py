@@ -31,31 +31,50 @@ class post_visited_details(viewsets.ModelViewSet):
         serializer = LoggerSerializer(create_user)
         return Response(serializer.data)
 
-import datetime
-##get two tables data by hospital id (logger/Hospital)
+from datetime import datetime
+
 @api_view(['GET'])
 def getloggerbyhospitalid(request, id):
-   
-    Hosp = Hospitals.objects.get(gid=id)
-    print("hospital id is",Hosp)
-    logger = Logger.objects.exclude(hosp_id__isnull=True).exclude(visited_time__exact="null").filter(hosp_id=Hosp).order_by('-visited_time')
-    print("logger details is",logger)
-    serializer = LoggerSerializer(logger, many=True)
-    # for data in serializer.data:
-    #     if data['visited_time'] == "null":
-    #         del data['visited_time']
+    try:
+        Hosp = Hospitals.objects.get(gid=id)
+    except Hospitals.DoesNotExist:
+        return Response({"error": "Hospital not found"}, status=404)
 
-    
-    users = user.objects.values('id', 'name')  # Modify 'name' to the actual field name in your registration_user model
-    user_data = {user['id']: user['name'] for user in users}
+    # Get all loggers for the hospital
+    logger_qs = Logger.objects.filter(
+        hosp_id=Hosp
+    ).exclude(visited_time__isnull=True).exclude(visited_time="null")
 
-    for data in serializer.data:
-        user_id = data.get('user_id')
-        if user_id in user_data:
-            data['user_id'] = user_id
-            data['user_name'] = user_data[user_id]
-    return Response(serializer.data)
-    # return Response(serializer.dat
+    serializer = LoggerSerializer(logger_qs, many=True)
+    logger_data = serializer.data
+
+    # Debug: print all raw visited_time strings
+    print("Before sorting:")
+    for i in logger_data:
+        print(i['visited_time'])
+
+    # Correct format: day/month/year
+    def parse_visited_time(item):
+        try:
+            return datetime.strptime(item['visited_time'], "%d/%m/%Y, %I:%M:%S %p")
+        except Exception as e:
+            print(f"Date parse error for {item['visited_time']}: {e}")
+            return datetime.min  # Push unparseable items to the end
+
+    # Sort logger list by datetime DESC (most recent first)
+    logger_sorted = sorted(logger_data, key=parse_visited_time, reverse=True)
+
+    # Map user_id to user_name
+    user_map = {u['id']: u['name'] for u in user.objects.values('id', 'name')}
+    for entry in logger_sorted:
+        uid = entry.get('user_id')
+        entry['user_name'] = user_map.get(uid, "Unknown")
+
+    print("After sorting:")
+    for i in logger_sorted:
+        print(i['visited_time'])
+
+    return Response(logger_sorted)
 
 ##get logger data by uuid
 @api_view(['GET'])
