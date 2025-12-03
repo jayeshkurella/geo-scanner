@@ -1,70 +1,93 @@
 pipeline {
-    agent any
+    agent { label 'coderize2' }
+
     environment {
-        WORKSPACE_DIR = "${WORKSPACE}/geo-scanner/scripts"
+        PROJECT_DIR = "${WORKSPACE}/cidcom-jjm"
+        SCRIPTS_DIR = "${PROJECT_DIR}/scripts"
+        VENV_DIR = "/home/ubuntu/venvs/cidcom_venv"   // ✨ Persistent venv for caching
+        PYTHON = "${VENV_DIR}/bin/python3"
     }
 
     stages {
+
+        /* ------------------ 1. CHECKOUT ------------------ */
         stage('Checkout') {
             steps {
-                git branch: 'master', url: 'https://github.com/jayeshkurella/geo-scanner.git'
-            }
-        }
-
-        stage('Setup Virtual Environment, Install Dependencies') {
-            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/master']],
+                    userRemoteConfigs: [[
+                        url: 'https://gitlab.com/coderizers/app_view/cidcom-jjm.git',
+                        credentialsId: 'new-token1'
+                    ]],
+                    cloneOption: [
+                        depth: 2, timeout: 20   // 🔥 shallow clone = faster
+                    ]
+                ])
                 sh '''
-                chmod +x scripts/setup_virtualenv.sh
-                ./scripts/setup_virtualenv.sh
+                    echo "Repository checked out"
+                    ls -l
                 '''
             }
         }
 
-        stage('Run Tests') {
-    steps {
-        sh '''
-        echo "Running automated tests..."
-        . venv/bin/activate
-        pip install pytest pytest-django
-        export DJANGO_SETTINGS_MODULE=Geo_Scanner.settings
-        pytest --maxfail=1 --disable-warnings -q || exit 1
-        '''
+        /* ------------------ 2. SETUP VENV ------------------ */
+        stage('Setup Python Environment') {
+            steps {
+                sh '''
+                    echo "Using Venv at: ${VENV_DIR}"
+                    if [ ! -d "${VENV_DIR}" ]; then
+                        echo "Creating virtual environment..."
+                        python3 -m venv ${VENV_DIR}
+                    fi
+
+                    echo "Upgrading pip..."
+                    ${VENV_DIR}/bin/pip install --upgrade pip wheel setuptools
+
+                    echo "Installing dependencies with cache..."
+                    ${VENV_DIR}/bin/pip install -r ${PROJECT_DIR}/requirements.txt
+                '''
+            }
+        }
+
+        /* ------------------ 3. MIGRATION ------------------ */
+        stage('Database Migration') {
+            steps {
+                sh '''
+                    echo "Running migrations..."
+
+                    # OPTIONAL safeguard
+                    ${PYTHON} ${PROJECT_DIR}/manage.py check || exit 1
+                    
+                    ${PYTHON} ${PROJECT_DIR}/manage.py makemigrations --noinput
+                    ${PYTHON} ${PROJECT_DIR}/manage.py migrate --noinput
+                '''
+            }
+        }
+
+        /* ------------------ 4. GUNICORN RELOAD ------------------ */
+        stage('Reload Gunicorn Service') {
+            steps {
+                sh '''
+                    echo "Reloading Gunicorn without downtime..."
+                    sudo systemctl daemon-reload
+                    sudo systemctl restart gunicorn.service
+                    sudo systemctl restart nginx
+                '''
+            }
+        }
     }
-}
 
-
-        stage('Migration') {
-            steps {
-                sh '''
-                chmod +x scripts/run_migration.sh
-                ./scripts/run_migration.sh
-                '''
-            }
+    /* ------------------ POST ACTIONS ------------------ */
+    post {
+        success {
+            echo "Deployment completed successfully ✔"
         }
-
-        stage('Setup Gunicorn') {
-            steps {
-                sh '''
-                chmod +x scripts/gunicorn.sh
-                ./scripts/gunicorn.sh
-                '''
-            }
+        failure {
+            echo "Deployment failed ❌"
         }
-
-        stage('Health Check & Monitoring') {
-    steps {
-        sh '''
-        echo "Running health check on /admin/ ..."
-        sleep 5
-        STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5003/admin/)
-        if [ "$STATUS" -ne 200 ] && [ "$STATUS" -ne 302 ]; then
-          echo "❌ Health check failed (HTTP $STATUS)"
-          exit 1
-        else
-          echo "✅ Application is healthy (HTTP $STATUS)"
-        fi
-        '''
-    }
-}
+        always {
+            echo "Pipeline finished."
+        }
     }
 }
