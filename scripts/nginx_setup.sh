@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-APP_NAME="test"
+APP_NAME="geoscanner"
 SERVER_NAME="172.21.103.29"
 
 FRONTEND_ROOT="/var/www/html/geoscanner"
