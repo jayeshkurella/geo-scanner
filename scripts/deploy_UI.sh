@@ -42,6 +42,18 @@ fi
 echo "Deploying new UI..."
 sudo mv "$EXTRACTED_DIR"/* "$PROJECT_DIR"
 
+# Update <base href> in index.html
+BASE_HREF="/geoscanner/"
+INDEX_FILE="$PROJECT_DIR/index.html"
+
+if [ -f "$INDEX_FILE" ]; then
+    echo "Updating <base href> in index.html to $BASE_HREF..."
+    sudo sed -i "s|<base href=\"[^\"]*\"|<base href=\"$BASE_HREF\"|g" "$INDEX_FILE"
+    echo "<base href> updated successfully"
+else
+    echo "⚠️ index.html not found, skipping base href update"
+fi
+
 # Cleanup
 sudo rm -rf "$TEMP_DIR"
 
