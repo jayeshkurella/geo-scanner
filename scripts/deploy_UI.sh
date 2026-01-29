@@ -43,7 +43,7 @@ echo "Deploying new UI..."
 sudo mv "$EXTRACTED_DIR"/* "$PROJECT_DIR"
 
 # Update <base href> in index.html
-BASE_HREF="/geoscanner/"
+BASE_HREF="/"
 INDEX_FILE="$PROJECT_DIR/index.html"
 
 if [ -f "$INDEX_FILE" ]; then
