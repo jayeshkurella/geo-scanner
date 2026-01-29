@@ -10,7 +10,7 @@ BACKEND_PORT=5003
 NGINX_CONF="/etc/nginx/sites-available/${APP_NAME}.conf"
 
 echo "=== Creating nginx fullstack config ==="
-cat <<EOF > $NGINX_CONF
+sudo tee "$NGINX_CONF" > /dev/null <<EOF
 server {
     listen 80;
     server_name ${SERVER_NAME};
@@ -27,17 +27,19 @@ server {
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_redirect off;
     }
 }
 EOF
 
 echo "=== Enabling site ==="
-ln -sf $NGINX_CONF /etc/nginx/sites-enabled/
+sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/
 
 echo "=== Testing nginx configuration ==="
-nginx -t
+sudo nginx -t
 
 echo "=== Reloading nginx ==="
-systemctl reload nginx
+sudo systemctl reload nginx
 
-echo "🎉 Nginx frontend + backend configuration applied successfully"
+echo "🎉 Nginx configuration applied successfully"
