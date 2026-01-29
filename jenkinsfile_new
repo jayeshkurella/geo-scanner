@@ -26,7 +26,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Running automated tests..."
-                source ${VENV_DIR}/bin/activate
+                . ${VENV_DIR}/bin/activate
                 export DJANGO_SETTINGS_MODULE=Geo_Scanner.settings
                 pytest --maxfail=1 --disable-warnings -q
                 '''
