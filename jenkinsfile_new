@@ -13,7 +13,7 @@ pipeline {
             }
         }
 
-        stage('Setup Virtual Environment & Dependencies') {
+        stage('Setup Virtualenv & Dependencies') {
             steps {
                 sh '''
                 chmod +x scripts/setup_virtualenv.sh
@@ -22,7 +22,7 @@ pipeline {
             }
         }
 
-        stage('Migration') {
+        stage('Run Migrations') {
             steps {
                 sh '''
                 chmod +x scripts/run_migration.sh
@@ -31,7 +31,25 @@ pipeline {
             }
         }
 
-        stage('Setup Gunicorn') {
+        stage('Deploy UI') {
+            steps {
+                sh '''
+                chmod +x scripts/deploy_UI.sh
+                ./scripts/deploy_UI.sh
+                '''
+            }
+        }
+
+        stage('Setup / Reload Nginx') {
+            steps {
+                sh '''
+                chmod +x scripts/nginx_setup.sh
+                ./scripts/nginx_setup.sh
+                '''
+            }
+        }
+
+        stage('Start Gunicorn') {
             steps {
                 sh '''
                 chmod +x scripts/gunicorn.sh
@@ -40,10 +58,10 @@ pipeline {
             }
         }
 
-        stage('Health Check & Monitoring') {
+        stage('Health Check') {
             steps {
                 sh '''
-                echo "Running health check on /admin/ ..."
+                echo "Running health check..."
                 sleep 5
                 STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5003/admin/)
                 if [ "$STATUS" -ne 200 ] && [ "$STATUS" -ne 302 ]; then
