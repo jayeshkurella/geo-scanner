@@ -1,5 +1,5 @@
 [Unit]
-Description=geo-scanner
+Description=geo_scanner
 
 [Service]
 User=jayesh
