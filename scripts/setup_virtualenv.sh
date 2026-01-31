@@ -5,7 +5,7 @@ project_directory="/var/lib/jenkins/workspace/geo-scanner"
 echo "Changing directory to project workspace directory"
 cd $project_directory || { echo "Failed to change directory to $project_directory"; exit 1; }
 
-echo "Validate the present working directory"
+echo "Validate The Present working directory"
 pwd
 
 if [ -d "venv" ]; then
