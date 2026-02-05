@@ -44,6 +44,7 @@ pipeline {
         stage('Run Migrations') {
             steps {
                 sh '''
+                chmod +x scripts/run_migration.sh
                 chmod +x scripts/run_migration_with_env.sh
                 ./scripts/run_migration_with_env.sh
                 '''
