@@ -1,7 +1,16 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(
+            name: 'ENV',
+            choices: ['dev'],  // Currently only dev
+            description: 'Deployment environment'
+        )
+    }
+
     environment {
+        APP_ENV  = "${params.ENV ?: 'dev'}"
         VENV_DIR = "${WORKSPACE}/venv"
     }
 
@@ -10,6 +19,17 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'master', url: 'https://github.com/jayeshkurella/geo-scanner.git'
+            }
+        }
+
+        stage('Load Environment') {
+            steps {
+                sh '''
+                chmod +x scripts/load_env.sh
+                source scripts/load_env.sh ${APP_ENV}
+                echo "Environment variables loaded:"
+                env | grep APP_ || true
+                '''
             }
         }
 
@@ -25,8 +45,8 @@ pipeline {
         stage('Run Migrations') {
             steps {
                 sh '''
-                chmod +x scripts/run_migration.sh
-                ./scripts/run_migration.sh
+                chmod +x scripts/run_migration_with_env.sh
+                ./scripts/run_migration_with_env.sh
                 '''
             }
         }
@@ -35,6 +55,7 @@ pipeline {
             steps {
                 sh '''
                 chmod +x scripts/deploy_UI.sh
+                source scripts/load_env.sh ${APP_ENV}
                 ./scripts/deploy_UI.sh
                 '''
             }
@@ -44,6 +65,7 @@ pipeline {
             steps {
                 sh '''
                 chmod +x scripts/nginx_setup.sh
+                source scripts/load_env.sh ${APP_ENV}
                 ./scripts/nginx_setup.sh
                 '''
             }
@@ -53,6 +75,7 @@ pipeline {
             steps {
                 sh '''
                 chmod +x scripts/gunicorn.sh
+                source scripts/load_env.sh ${APP_ENV}
                 ./scripts/gunicorn.sh
                 '''
             }
@@ -63,13 +86,12 @@ pipeline {
                 sh '''
                 echo "Running health check..."
                 sleep 5
-                STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5003/admin/)
-                if [ "$STATUS" -ne 200 ] && [ "$STATUS" -ne 302 ]; then
+                STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:${APP_PORT}/admin/)
+                if [ "$STATUS" != "200" ] && [ "$STATUS" != "302" ]; then
                     echo "❌ Health check failed (HTTP $STATUS)"
                     exit 1
-                else
-                    echo "✅ Application is healthy (HTTP $STATUS)"
                 fi
+                echo "✅ Application is healthy (HTTP $STATUS)"
                 '''
             }
         }
