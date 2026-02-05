@@ -26,9 +26,8 @@ pipeline {
             steps {
                 sh '''
                 chmod +x scripts/load_env.sh
-                source scripts/load_env.sh ${APP_ENV}
+                bash -c "source scripts/load_env.sh dev"
                 echo "Environment variables loaded:"
-                env | grep APP_ || true
                 '''
             }
         }
