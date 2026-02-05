@@ -24,75 +24,75 @@ pipeline {
 
         stage('Load Environment') {
             steps {
-                sh '''
+                sh """
                 chmod +x scripts/load_env.sh
-                bash scripts/load_env.sh dev
-                echo "Environment variables loaded:"
-                '''
+                bash scripts/load_env.sh ${APP_ENV}
+                echo "✅ Loaded environment variables from .env.${APP_ENV}"
+                """
             }
         }
 
         stage('Setup Virtualenv & Dependencies') {
             steps {
-                sh '''
+                sh """
                 chmod +x scripts/setup_virtualenv.sh
                 ./scripts/setup_virtualenv.sh
-                '''
+                """
             }
         }
 
         stage('Run Migrations') {
             steps {
-                sh '''
+                sh """
                 chmod +x scripts/run_migration.sh
                 chmod +x scripts/run_migration_with_env.sh
-                ./scripts/run_migration_with_env.sh
-                '''
+                ./scripts/run_migration_with_env.sh ${APP_ENV}
+                """
             }
         }
 
         stage('Deploy UI') {
             steps {
-                sh '''
+                sh """
                 chmod +x scripts/deploy_UI.sh
-                source scripts/load_env.sh ${APP_ENV}
+                bash scripts/load_env.sh ${APP_ENV}
                 ./scripts/deploy_UI.sh
-                '''
+                """
             }
         }
 
         stage('Setup / Reload Nginx') {
             steps {
-                sh '''
+                sh """
                 chmod +x scripts/nginx_setup.sh
-                source scripts/load_env.sh ${APP_ENV}
+                bash scripts/load_env.sh ${APP_ENV}
                 ./scripts/nginx_setup.sh
-                '''
+                """
             }
         }
 
         stage('Start Gunicorn') {
             steps {
-                sh '''
+                sh """
                 chmod +x scripts/gunicorn.sh
-                source scripts/load_env.sh ${APP_ENV}
+                bash scripts/load_env.sh ${APP_ENV}
                 ./scripts/gunicorn.sh
-                '''
+                """
             }
         }
 
         stage('Health Check') {
             steps {
-                sh '''
+                sh """
                 echo "Running health check..."
                 sleep 5
-                STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:${APP_PORT}/admin/)
-                if [ "$STATUS" != "200" ] && [ "$STATUS" != "302" ]; then
-                    echo "❌ Health check failed (HTTP $STATUS)"
+                STATUS=\$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:\$APP_PORT/admin/)
+                if [ "\$STATUS" != "200" ] && [ "\$STATUS" != "302" ]; then
+                    echo "❌ Health check failed (HTTP \$STATUS)"
                     exit 1
                 fi
-                echo "✅ Application is healthy (HTTP $STATUS)"
-                '''
+                echo "✅ Application is healthy (HTTP \$STATUS)"
+                """
             }
         }
     }
