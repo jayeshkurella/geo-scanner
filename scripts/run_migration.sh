@@ -1,27 +1,26 @@
 #!/bin/bash
 
-project_directory="/var/lib/jenkins/workspace/geo-scanner"
+# Load environment variables
+set -o allexport
+source env/.env.dev
+set +o allexport
 
 echo "Change directory to python project directory"
-
-cd $project_directory
+cd "$PROJECT_DIR" || { echo "Failed to change directory"; exit 1; }
 
 echo "Activating the virtual environment"
-source venv/bin/activate
+source "$VENV_DIR/bin/activate" || { echo "Failed to activate venv"; exit 1; }
 
 echo "Checking if virtual environment is active after activation"
 if [ -z "$VIRTUAL_ENV" ]; then
   echo "No virtual environment is active."
+  exit 1
 else
   echo "Virtual environment is active: $VIRTUAL_ENV"
 fi
 
-#echo "Processing for makemigrations"
-cd $project_directory
-#python3 manage.py makemigrations --noinput
-
 echo "Processing for migrations"
-python3 manage.py migrate
+$PYTHON_BIN "$MANAGE_FILE" migrate --noinput || { echo "Migration failed"; exit 1; }
 
 echo "Migrations Done"
 
