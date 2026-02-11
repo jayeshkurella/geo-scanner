@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e
 
-APP_NAME="geoscanner"
-SERVER_NAME="172.21.103.29"
+# Load environment variables
+set -o allexport
+source env/.env.dev
+set +o allexport
 
-FRONTEND_ROOT="/var/www/html/geoscanner"
-BACKEND_PORT=5003
-
-NGINX_CONF="/etc/nginx/sites-available/${APP_NAME}.conf"
+NGINX_CONF="${NGINX_AVAILABLE_PATH}/${APP_NAME}.conf"
 
 echo "=== Creating nginx fullstack config ==="
+
 sudo tee "$NGINX_CONF" > /dev/null <<EOF
 server {
     listen 80;
@@ -23,7 +23,7 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://127.0.0.1:${BACKEND_PORT}/;
+        proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT}/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -34,7 +34,7 @@ server {
 EOF
 
 echo "=== Enabling site ==="
-sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/
+sudo ln -sf "$NGINX_CONF" "${NGINX_ENABLED_PATH}/"
 
 echo "=== Testing nginx configuration ==="
 sudo nginx -t
