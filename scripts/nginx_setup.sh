@@ -3,7 +3,7 @@ set -e
 
 # Load environment variables
 set -o allexport
-source env/.env.dev
+source .env.dev
 set +o allexport
 
 NGINX_CONF="${NGINX_AVAILABLE_PATH}/${APP_NAME}.conf"
