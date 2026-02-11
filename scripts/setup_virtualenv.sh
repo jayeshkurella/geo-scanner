@@ -1,22 +1,25 @@
 #!/bin/bash
 
-project_directory="/var/lib/jenkins/workspace/geo-scanner"
+# Load environment variables
+set -o allexport
+source env/.env.dev
+set +o allexport
 
 echo "Changing directory to project workspace directory"
-cd $project_directory || { echo "Failed to change directory to $project_directory"; exit 1; }
+cd "$PROJECT_DIR" || { echo "Failed to change directory to $PROJECT_DIR"; exit 1; }
 
 echo "Validate The Present working directory"
 pwd
 
-if [ -d "venv" ]; then
+if [ -d "$VENV_DIR" ]; then
     echo "Python virtual environment exists."
 else
     echo "Python virtual environment does not exist. Creating a new one..."
-    python3 -m venv venv || { echo "Failed to create virtual environment"; exit 1; }
+    $PYTHON_BIN -m venv "$VENV_DIR" || { echo "Failed to create virtual environment"; exit 1; }
 fi
 
 echo "Activating the virtual environment!"
-source venv/bin/activate || { echo "Failed to activate the virtual environment"; exit 1; }
+source "$VENV_DIR/bin/activate" || { echo "Failed to activate the virtual environment"; exit 1; }
 
 echo "Checking if virtual environment is active after activation"
 if [ -z "$VIRTUAL_ENV" ]; then
@@ -27,7 +30,7 @@ else
 fi
 
 echo "Installing Python dependencies!"
-pip install -r requirements.txt || { echo "Failed to install dependencies"; exit 1; }
+pip install -r "$REQUIREMENTS_FILE" || { echo "Failed to install dependencies"; exit 1; }
 
 echo "Deactivating the virtual environment"
 deactivate
