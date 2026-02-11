@@ -2,7 +2,7 @@
 
 # Load environment variables
 set -o allexport
-source env/.env.dev
+source .env.dev
 set +o allexport
 
 echo "Changing directory to project workspace directory"
