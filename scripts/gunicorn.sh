@@ -1,50 +1,55 @@
 #!/bin/bash
 
-# Define project directory and log directory paths
-project_directory="/var/lib/jenkins/workspace/geo-scanner"
-log_directory="/var/log/geo_scanner"
+# Load environment variables
+set -o allexport
+source env/.env.dev
+set +o allexport
 
 echo "Changing directory to project workspace directory"
-cd $project_directory || { echo "Failed to change directory to $project_directory"; exit 1; }
+cd "$PROJECT_DIR" || { 
+    echo "Failed to change directory to $PROJECT_DIR"
+    exit 1
+}
 
 echo "Validate the present working directory"
 pwd
 
-# Check if gunicorn.service file exists in the correct location
-service_file="$project_directory/scripts/geo_scanner.service"
+SERVICE_FILE="$PROJECT_DIR/scripts/$SERVICE_FILE_NAME"
 
-if [ -f "$service_file" ]; then
-    echo "gunicorn.service found. Copying the service file..."
-    sudo cp "$service_file" /etc/systemd/system/
+# Check if service file exists
+if [ -f "$SERVICE_FILE" ]; then
+    echo "$SERVICE_FILE_NAME found. Copying the service file..."
+    
+    sudo cp "$SERVICE_FILE" "$SYSTEMD_PATH/"
     sudo systemctl daemon-reload
-    sudo systemctl start geo_scanner.service
-    sudo systemctl enable geo_scanner.service
-    echo "Gunicorn has been started and enabled."
+    sudo systemctl enable "$SERVICE_NAME"
+    sudo systemctl restart "$SERVICE_NAME"
+    
+    echo "$SERVICE_NAME has been started and enabled."
 else
-    echo "Error: geo_scanner.service not found in $service_file. Please ensure the file exists."
+    echo "Error: $SERVICE_FILE_NAME not found at $SERVICE_FILE"
     exit 1
 fi
 
-# Restart and check the status of the gunicorn service
-# Check the service status and handle errors correctly
-sudo systemctl restart geo_scanner.service || { echo "Failed to restart geo_scanner.service"; exit 1; }
+# Check service status
+SERVICE_STATUS=$(sudo systemctl is-active "$SERVICE_NAME")
 
-# Checking the status of the service after attempting to restart
-service_status=$(sudo systemctl is-active geo_scanner.service)
-if [ "$service_status" == "active" ]; then
-    echo "geo_scanner.service is running successfully."
+if [ "$SERVICE_STATUS" == "active" ]; then
+    echo "$SERVICE_NAME is running successfully."
 else
-    echo "geo_scanner.service failed to start. Status: $service_status"
+    echo "$SERVICE_NAME failed to start. Status: $SERVICE_STATUS"
     exit 1
 fi
 
-# Create /var/log/geo_scanner directory, set permissions, and create log files
-if [ -d "$log_directory" ]; then
-    echo "Log directory $log_directory is present."
+# Create log directory if not exists
+if [ -d "$LOG_DIR" ]; then
+    echo "Log directory $LOG_DIR is present."
 else
-    echo "Log directory $log_directory not found. Creating the directory..."
-    sudo mkdir -p $log_directory
-    sudo chown $USER:$USER $log_directory
-    sudo touch $log_directory/error.log $log_directory/access.log
-    echo "Log directory and files have been created at $log_directory."
+    echo "Log directory $LOG_DIR not found. Creating..."
+    
+    sudo mkdir -p "$LOG_DIR"
+    sudo touch "$LOG_DIR/error.log" "$LOG_DIR/access.log"
+    sudo chown -R $USER:$USER "$LOG_DIR"
+    
+    echo "Log directory and log files created at $LOG_DIR"
 fi
