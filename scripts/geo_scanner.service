@@ -2,11 +2,11 @@
 Description=geo_scanner
 
 [Service]
-User=jayesh
+User=administrator
 #Group=administrator
 Type=simple
-WorkingDirectory=/var/lib/jenkins/workspace/geo-scanner
-ExecStart=/var/lib/jenkins/workspace/geo-scanner/venv/bin/gunicorn Geo_Scanner.wsgi:application -b 0.0.0.0:5003 --error-logfile /var/log/geo_scanner/error.log --access-logfile /var/log/geo_scanner/access.log
+WorkingDirectory=/home/administrator/backend_project/workspace/geo-scanner-test
+ExecStart=/home/administrator/backend_project/workspace/geo-scanner-test/venv/bin/gunicorn Geo_Scanner.wsgi:application -b 0.0.0.0:5333 
 Restart=always
 RestartSec=3
 
