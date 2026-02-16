@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-PROJECT_DIR="/var/www/html/geoscanner"
-NEW_PROJECT_ZIP="/home/jayesh/geoscanner.zip"
-BACKUP_DIR="/var/backups/geoscanner"
+PROJECT_DIR="/var/geoscanner"
+NEW_PROJECT_ZIP="/var/geoscanner.zip"
+BACKUP_DIR="/var/backups/test/geoscanner"
 
 echo "=== UI Deployment Started ==="
 
