@@ -4,6 +4,7 @@ pipeline {
     options {
         timestamps()
         disableConcurrentBuilds()
+        timeout(time: 20, unit: 'MINUTES')
     }
 
     parameters {
@@ -20,7 +21,7 @@ pipeline {
     }
 
     environment {
-        APP_ENV  = "${params.ENV}"
+        APP_ENV = "${params.ENV}"
         VENV_DIR = "${WORKSPACE}/venv"
     }
 
@@ -28,38 +29,49 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: "${params.BRANCH}",
-                    url: 'https://github.com/jayeshkurella/geo-scanner.git'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${params.BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/jayeshkurella/geo-scanner.git',
+                        credentialsId: 'github-local'
+                    ]]
+                ])
             }
         }
 
         stage('Prepare') {
             steps {
-                sh """
+                sh '''
                     echo "Making all scripts executable..."
                     chmod +x scripts/*.sh
-                    echo "Loading environment: ${APP_ENV}"
-                    source scripts/load_env.sh ${APP_ENV}
-                """
+                '''
             }
         }
 
-        stage('Setup Environment & Migrate') {
+        stage('Setup Virtualenv') {
             steps {
-                sh """
+                sh '''
                     ./scripts/setup_virtualenv.sh
+                '''
+            }
+        }
+
+        stage('Run Migrations') {
+            steps {
+                sh '''
                     ./scripts/run_migration_with_env.sh ${APP_ENV}
-                """
+                '''
             }
         }
 
         stage('Deploy Application') {
             steps {
-                sh """
+                sh '''
                     ./scripts/deploy_UI.sh
                     ./scripts/nginx_setup.sh
                     ./scripts/gunicorn.sh
-                """
+                '''
             }
         }
 
@@ -68,12 +80,15 @@ pipeline {
                 sh '''
                     echo "Running health check..."
                     sleep 5
+
                     STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5333/admin/)
+
                     if [ "$STATUS" != "200" ] && [ "$STATUS" != "302" ]; then
-                        echo "Health check failed (HTTP $STATUS)"
+                        echo "❌ Health check failed (HTTP $STATUS)"
                         exit 1
                     fi
-                    echo "Application is healthy (HTTP $STATUS)"
+
+                    echo "✅ Application is healthy (HTTP $STATUS)"
                 '''
             }
         }
@@ -87,7 +102,7 @@ pipeline {
             echo "❌ Deployment Failed"
         }
         always {
-            cleanWs()
+            deleteDir()
         }
     }
 }
