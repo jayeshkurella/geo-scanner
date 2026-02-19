@@ -1,0 +1,93 @@
+pipeline {
+    agent { label 'coderize2' }
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        choice(
+            name: 'ENV',
+            choices: ['dev'],
+            description: 'Deployment environment'
+        )
+        string(
+            name: 'BRANCH',
+            defaultValue: 'master',
+            description: 'Git branch to deploy'
+        )
+    }
+
+    environment {
+        APP_ENV  = "${params.ENV}"
+        VENV_DIR = "${WORKSPACE}/venv"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: "${params.BRANCH}",
+                    url: 'https://github.com/jayeshkurella/geo-scanner.git'
+            }
+        }
+
+        stage('Prepare') {
+            steps {
+                sh """
+                    echo "Making all scripts executable..."
+                    chmod +x scripts/*.sh
+                    echo "Loading environment: ${APP_ENV}"
+                    source scripts/load_env.sh ${APP_ENV}
+                """
+            }
+        }
+
+        stage('Setup Environment & Migrate') {
+            steps {
+                sh """
+                    ./scripts/setup_virtualenv.sh
+                    ./scripts/run_migration_with_env.sh ${APP_ENV}
+                """
+            }
+        }
+
+        stage('Deploy Application') {
+            steps {
+                sh """
+                    ./scripts/deploy_UI.sh
+                    ./scripts/nginx_setup.sh
+                    ./scripts/gunicorn.sh
+                """
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh '''
+                    echo "Running health check..."
+                    sleep 5
+                    STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5333/admin/)
+                    if [ "$STATUS" != "200" ] && [ "$STATUS" != "302" ]; then
+                        echo "Health check failed (HTTP $STATUS)"
+                        exit 1
+                    fi
+                    echo "Application is healthy (HTTP $STATUS)"
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Deployment Successful"
+        }
+        failure {
+            echo "❌ Deployment Failed"
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
