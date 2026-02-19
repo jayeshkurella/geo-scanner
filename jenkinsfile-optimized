@@ -21,7 +21,7 @@ pipeline {
     }
 
     environment {
-        APP_ENV = "${params.ENV}"
+        APP_ENV  = "${params.ENV}"
         VENV_DIR = "${WORKSPACE}/venv"
     }
 
@@ -40,7 +40,7 @@ pipeline {
             }
         }
 
-        stage('Prepare') {
+        stage('Prepare Scripts') {
             steps {
                 sh '''
                     echo "Making all scripts executable..."
@@ -49,17 +49,10 @@ pipeline {
             }
         }
 
-        stage('Setup Virtualenv') {
+        stage('Setup & Migrate') {
             steps {
                 sh '''
                     ./scripts/setup_virtualenv.sh
-                '''
-            }
-        }
-
-        stage('Run Migrations') {
-            steps {
-                sh '''
                     ./scripts/run_migration_with_env.sh ${APP_ENV}
                 '''
             }
@@ -84,11 +77,11 @@ pipeline {
                     STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:5333/admin/)
 
                     if [ "$STATUS" != "200" ] && [ "$STATUS" != "302" ]; then
-                        echo "❌ Health check failed (HTTP $STATUS)"
+                        echo "Health check failed (HTTP $STATUS)"
                         exit 1
                     fi
 
-                    echo "✅ Application is healthy (HTTP $STATUS)"
+                    echo "Application is healthy (HTTP $STATUS)"
                 '''
             }
         }
@@ -96,13 +89,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Deployment Successful"
+            echo "Deployment Successful"
         }
         failure {
-            echo "❌ Deployment Failed"
-        }
-        always {
-            deleteDir()
+            echo "Deployment Failed"
         }
     }
 }
